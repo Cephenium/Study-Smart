@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year 13 Chemistry Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a3c6e 0%, #2a5298 100%);
+            min-height: 100vh;
+        }
+        
+        .character {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .character:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .character.selected {
+            border: 3px solid #4ade80;
+            transform: translateY(-5px);
+        }
+        
+        .timer-bar {
+            transition: width 1s linear;
+        }
+        
+        .option-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .option-btn:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .option-btn.correct {
+            background-color: #4ade80 !important;
+            color: white !important;
+        }
+        
+        .option-btn.incorrect {
+            background-color: #f87171 !important;
+            color: white !important;
+        }
+        
+        .option-btn.selected {
+            border: 2px solid #3b82f6;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .molecule-svg {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="text-white">
+  
+<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <p class="text-yellow-700">
+                <span class="font-bold">Note:</span> This is a demonstration quiz. In a real implementation, proper authentication would be required.
+            </p>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">Instructions:</h2>
+            <ul class="list-disc pl-5 space-y-2">
+                <li>This quiz contains 10 questions on electrochemistry.</li>
+                <li>The first 5 questions have a <span class="font-bold">90-second</span> time limit each.</li>
+                <li>The last 5 questions have a <span class="font-bold">120-second</span> time limit each.</li>
+                <li>Questions will automatically advance when the time limit is reached.</li>
+                <li>You will receive your score and detailed solutions at the end.</li>
+            </ul>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold mb-2">Student Information:</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input type="text" id="student-name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="student-id" class="block text-sm font-medium text-gray-700 mb-1">Student ID (Demo)</label>
+                    <input type="text" id="student-id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+        
+        <button id="start-quiz" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 flex items-center justify-center">
+            <span>Start Quiz</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Quiz Container -->
+    <div id="quiz-container" class="hidden">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h2 class="text-xl font-bold" id="question-number">Question 1/10</h2>
+                    <p class="text-sm text-gray-500" id="question-type">Multiple Choice</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-lg font-bold" id="timer">01:30</div>
+                    <p class="text-sm text-gray-500">Time Remaining</p>
+                </div>
+            </div>
+            
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div class="timer-bar bg-blue-600 h-2.5 rounded-full" id="timer-bar" style="width: 100%"></div>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-4" id="question-text">Loading question...</h3>
+                
+                <div id="multiple-choice-container" class="space-y-3">
+                    <!-- Multiple choice options will be inserted here -->
+                </div>
+                
+                <div id="short-answer-container" class="hidden">
+                    <textarea id="short-answer-input" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your answer here..."></textarea>
+                </div>
+            </div>
+            
+            <div class="flex justify-between">
+                <button id="prev-question" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition duration-300 hidden">
+                    Previous
+                </button>
+                <div class="flex-grow"></div>
+                <button id="next-question" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-300">
+                    Next Question
+                </button>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-medium">Quiz Progress</h3>
+                <span id="progress-text">1/10 Questions</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div class="bg-green-600 h-2.5 rounded-full" id="progress-bar" style="width: 10%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="hidden">
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900">Quiz Completed!</h1>
+                <p class="text-gray-600 mt-2" id="student-info">Student Name (ID: Demo)</p>
+            </div>
+            
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-semibold">Your Score</h2>
+                    <div class="text-2xl font-bold text-blue-600" id="final-score">0/10</div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div class="bg-blue-600 h-4 rounded-full" id="score-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold mb-4">Score Breakdown by Topic</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="topic-breakdown">
+                    <!-- Topic breakdown will be inserted here -->
+                </div>
+            </div>
+            
+            <div>
+                <h2 class="text-xl font-semibold mb-4">Detailed Solutions</h2>
+                <div class="space-y-6" id="solutions-container">
+                    <!-- Solutions will be inserted here -->
+                </div>
+            </div>
+            
+            <button id="restart-quiz" class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition duration-300">
+                Restart Quiz
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Quiz data
+        const quizData = [
+            {
+                question: "What is the standard electrode potential (E°) for the hydrogen electrode?",
+                type: "multiple-choice",
+                options: ["0.00 V", "+1.00 V", "-1.00 V", "+0.76 V"],
+                correctAnswer: 0,
+                timeLimit: 90,
+                topic: "Standard Electrode Potentials",
+                solution: "The standard hydrogen electrode (SHE) is defined as having a potential of exactly 0.00 V. It serves as the reference point for all other electrode potentials."
+            },
+            {
+                question: "In an electrochemical cell, oxidation occurs at the:",
+                type: "multiple-choice",
+                options: ["Anode", "Cathode", "Electrolyte", "Salt bridge"],
+                correctAnswer: 0,
+                timeLimit: 90,
+                topic: "Electrochemical Cells",
+                solution: "Oxidation always occurs at the anode in an electrochemical cell. This is where electrons are lost (oxidation). The mnemonic 'An Ox' helps remember that oxidation occurs at the anode."
+            },
+            {
+                question: "Calculate the cell potential for a galvanic cell made from Zn²⁺/Zn (E° = -0.76 V) and Cu²⁺/Cu (E° = +0.34 V) half-cells under standard conditions.",
+                type: "short-answer",
+                correctAnswer: "1.10 V",
+                timeLimit: 90,
+                topic: "Cell Potentials",
+                solution: "E°cell = E°cathode - E°anode = E°(Cu²⁺/Cu) - E°(Zn²⁺/Zn) = +0.34 V - (-0.76 V) = +1.10 V. The positive cell potential indicates a spontaneous reaction."
+            },
+            {
+                question: "Which of the following statements about the Nernst equation is correct?",
+                type: "multiple-choice",
+                options: [
+                    "It relates cell potential to concentration and temperature",
+                    "It is independent of temperature",
+                    "It only applies to non-standard conditions",
+                    "It calculates the standard cell potential"
+                ],
+                correctAnswer: 0,
+                timeLimit: 90,
+                topic: "Nernst Equation",
+                solution: "The Nernst equation (E = E° - (RT/nF)lnQ) relates cell potential to both concentration (through the reaction quotient Q) and temperature (T). It allows us to calculate cell potentials under non-standard conditions."
+            },
+            {
+                question: "Write the balanced half-reaction for the reduction of permanganate (MnO₄⁻) to manganese(II) ions (Mn²⁺) in acidic solution.",
+                type: "short-answer",
+                correctAnswer: "MnO₄⁻ + 8H⁺ + 5e⁻ → Mn²⁺ + 4H₂O",
+                timeLimit: 90,
+                topic: "Redox Half-Reactions",
+                solution: "The balanced half-reaction is: MnO₄⁻ + 8H⁺ + 5e⁻ → Mn²⁺ + 4H₂O. This involves balancing oxygen atoms with H₂O, hydrogen atoms with H⁺, and charge with electrons."
+            },
+            {
+                question: "Explain the function of a salt bridge in an electrochemical cell and what would happen if it were removed.",
+                type: "short-answer",
+                correctAnswer: "The salt bridge allows ion flow to maintain electrical neutrality without mixing the half-cell solutions. Without it, the cell would stop functioning as charge would build up.",
+                timeLimit: 120,
+                topic: "Electrochemical Cells",
+                solution: "A salt bridge contains an inert electrolyte and allows ions to flow between half-cells to maintain electrical neutrality without mixing the solutions. Without a salt bridge, charge would build up in each half-cell, and the flow of electrons would quickly stop, halting the electrochemical reaction."
+            },
+            {
+                question: "Calculate the Gibbs free energy change (ΔG) for a cell with a standard potential of +0.46 V if 2 moles of electrons are transferred in the reaction. (F = 96,500 C/mol)",
+                type: "short-answer",
+                correctAnswer: "-88780 J" || "-88.78 kJ" || "-88.8 kJ",
+                timeLimit: 120,
+                topic: "Thermodynamics of Electrochemical Cells",
+                solution: "Using the equation ΔG° = -nFE°, where n = 2 mol, F = 96,500 C/mol, and E° = +0.46 V: ΔG° = -(2 mol)(96,500 C/mol)(0.46 V) = -88,780 J = -88.78 kJ. The negative value indicates a spontaneous reaction."
+            },
+            {
+                question: "Which of the following factors does NOT affect the electrolytic conductivity of a solution?",
+                type: "multiple-choice",
+                options: [
+                    "The color of the solution",
+                    "Temperature",
+                    "Concentration of ions",
+                    "Nature of the electrolyte"
+                ],
+                correctAnswer: 0,
+                timeLimit: 120,
+                topic: "Electrolytic Conductivity",
+                solution: "The color of a solution does not affect its electrolytic conductivity. Conductivity is affected by temperature (higher temperature generally increases conductivity), concentration of ions (more ions typically means higher conductivity), and the nature of the electrolyte (some ions have higher mobility than others)."
+            },
+            {
+                question: "During electrolysis of molten sodium chloride, what products form at the anode and cathode?",
+                type: "multiple-choice",
+                options: [
+                    "Anode: Cl₂, Cathode: Na",
+                    "Anode: Na, Cathode: Cl₂",
+                    "Anode: O₂, Cathode: H₂",
+                    "Anode: H₂, Cathode: O₂"
+                ],
+                correctAnswer: 0,
+                timeLimit: 120,
+                topic: "Electrolysis",
+                solution: "In the electrolysis of molten NaCl, chloride ions (Cl⁻) are oxidized at the anode to form chlorine gas (Cl₂): 2Cl⁻ → Cl₂ + 2e⁻. Sodium ions (Na⁺) are reduced at the cathode to form sodium metal: Na⁺ + e⁻ → Na."
+            },
+            {
+                question: "A current of 2.5 amperes is passed through a solution of copper(II) sulfate for 30 minutes. Calculate the mass of copper deposited at the cathode. (Molar mass of Cu = 63.5 g/mol, F = 96,500 C/mol)",
+                type: "short-answer",
+                correctAnswer: "1.48 g" || "1.5 g",
+                timeLimit: 120,
+                topic: "Electrochemical Calculations",
+                solution: "Using Faraday's law: m = (I × t × M)/(n × F), where I = 2.5 A, t = 30 × 60 = 1800 s, M = 63.5 g/mol, n = 2 (Cu²⁺ + 2e⁻ → Cu), and F = 96,500 C/mol. m = (2.5 A × 1800 s × 63.5 g/mol)/(2 × 96,500 C/mol) = 1.48 g of copper."
+            }
+        ];
+
+        // DOM elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsScreen = document.getElementById('results-screen');
+        const startQuizBtn = document.getElementById('start-quiz');
+        const nextQuestionBtn = document.getElementById('next-question');
+        const prevQuestionBtn = document.getElementById('prev-question');
+        const restartQuizBtn = document.getElementById('restart-quiz');
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTypeEl = document.getElementById('question-type');
+        const questionTextEl = document.getElementById('question-text');
+        const multipleChoiceContainer = document.getElementById('multiple-choice-container');
+        const shortAnswerContainer = document.getElementById('short-answer-container');
+        const shortAnswerInput = document.getElementById('short-answer-input');
+        const timerEl = document.getElementById('timer');
+        const timerBar = document.getElementById('timer-bar');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const finalScoreEl = document.getElementById('final-score');
+        const scoreBar = document.getElementById('score-bar');
+        const topicBreakdownEl = document.getElementById('topic-breakdown');
+        const solutionsContainerEl = document.getElementById('solutions-container');
+        const studentInfoEl = document.getElementById('student-info');
+
+        // Quiz state
+        let currentQuestionIndex = 0;
+        let timer = null;
+        let timeLeft = 0;
+        let userAnswers = [];
+        let quizStarted = false;
+
+        // Start the quiz
+        startQuizBtn.addEventListener('click', function() {
+            const studentName = document.getElementById('student-name').value.trim();
+            const studentId = document.getElementById('student-id').value.trim();
+            
+            if (!studentName || !studentId) {
+                alert('Please enter your name and student ID to continue.');
+                return;
+            }
+            
+            welcomeScreen.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            quizStarted = true;
+            
+            // Initialize user answers
+            userAnswers = Array(quizData.length).fill(null);
+            
+            // Load first question
+            loadQuestion(0);
+        });
+
+        // Load a question
+        function loadQuestion(index) {
+            if (index < 0 || index >= quizData.length) return;
+            
+            currentQuestionIndex = index;
+            const question = quizData[index];
+            
+            // Update question info
+            questionNumberEl.textContent = `Question ${index + 1}/${quizData.length}`;
+            questionTypeEl.textContent = question.type === 'multiple-choice' ? 'Multiple Choice' : 'Short Answer';
+            questionTextEl.textContent = question.question;
+            
+            // Update progress
+            progressBar.style.width = `${((index + 1) / quizData.length) * 100}%`;
+            progressText.textContent = `${index + 1}/${quizData.length} Questions`;
+            
+            // Clear previous question content
+            multipleChoiceContainer.innerHTML = '';
+            shortAnswerInput.value = '';
+            
+            // Show appropriate input type
+            if (question.type === 'multiple-choice') {
+                multipleChoiceContainer.classList.remove('hidden');
+                shortAnswerContainer.classList.add('hidden');
+                
+                // Create options
+                question.options.forEach((option, optionIndex) => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.className = 'option border border-gray-300 rounded-md p-4 cursor-pointer';
+                    if (userAnswers[index] === optionIndex) {
+                        optionDiv.classList.add('selected');
+                    }
+                    
+                    optionDiv.textContent = option;
+                    optionDiv.dataset.index = optionIndex;
+                    
+                    optionDiv.addEventListener('click', function() {
+                        // Remove selected class from all options
+                        document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                        // Add selected class to clicked option
+                        this.classList.add('selected');
+                        // Save answer
+                        userAnswers[currentQuestionIndex] = parseInt(this.dataset.index);
+                    });
+                    
+                    multipleChoiceContainer.appendChild(optionDiv);
+                });
+            } else {
+                multipleChoiceContainer.classList.add('hidden');
+                shortAnswerContainer.classList.remove('hidden');
+                
+                // Set previous answer if exists
+                if (userAnswers[index] !== null) {
+                    shortAnswerInput.value = userAnswers[index];
+                }
+                
+                // Save short answer on input
+                shortAnswerInput.addEventListener('input', function() {
+                    userAnswers[currentQuestionIndex] = this.value;
+                });
+            }
+            
+            // Reset and start timer
+            clearInterval(timer);
+            timeLeft = question.timeLimit;
+            updateTimer();
+            startTimer();
+            
+            // Update navigation buttons
+            prevQuestionBtn.classList.add('hidden'); // We're not allowing going back in this quiz
+            
+            if (index === quizData.length - 1) {
+                nextQuestionBtn.textContent = 'Finish Quiz';
+            } else {
+                nextQuestionBtn.textContent = 'Next Question';
+            }
+        }
+
+        // Update timer display
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update timer bar
+            const question = quizData[currentQuestionIndex];
+            const percentage = (timeLeft / question.timeLimit) * 100;
+            timerBar.style.width = `${percentage}%`;
+            
+            // Change color based on time remaining
+            if (percentage > 50) {
+                timerBar.classList.remove('bg-yellow-500', 'bg-red-500');
+                timerBar.classList.add('bg-blue-600');
+            } else if (percentage > 25) {
+                timerBar.classList.remove('bg-blue-600', 'bg-red-500');
+                timerBar.classList.add('bg-yellow-500');
+            } else {
+                timerBar.classList.remove('bg-blue-600', 'bg-yellow-500');
+                timerBar.classList.add('bg-red-500');
+            }
+        }
+
+        // Start the timer
+        function startTimer() {
+            timer = setInterval(function() {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    // Save short answer if needed
+                    if (quizData[currentQuestionIndex].type === 'short-answer') {
+                        userAnswers[currentQuestionIndex] = shortAnswerInput.value;
+                    }
+                    // Move to next question or finish quiz
+                    if (currentQuestionIndex < quizData.length - 1) {
+                        loadQuestion(currentQuestionIndex + 1);
+                    } else {
+                        showResults();
+                    }
+                }
+            }, 1000);
+        }
+
+        // Next question button handler
+        nextQuestionBtn.addEventListener('click', function() {
+            // Save short answer if needed
+            if (quizData[currentQuestionIndex].type === 'short-answer') {
+                userAnswers[currentQuestionIndex] = shortAnswerInput.value;
+            }
+            
+            // Move to next question or finish quiz
+            if (currentQuestionIndex < quizData.length - 1) {
+                loadQuestion(currentQuestionIndex + 1);
+            } else {
+                showResults();
+            }
+        });
+
+        // Show quiz results
+        function showResults() {
+            clearInterval(timer);
+            quizContainer.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            
+            // Calculate score
+            let score = 0;
+            const topicScores = {};
+            const topicTotals = {};
+            
+            quizData.forEach((question, index) => {
+                // Initialize topic counters if not exists
+                if (!topicScores[question.topic]) {
+                    topicScores[question.topic] = 0;
+                    topicTotals[question.topic] = 0;
+                }
+                
+                topicTotals[question.topic]++;
+                
+                // Check if answer is correct
+                let isCorrect = false;
+                if (question.type === 'multiple-choice') {
+                    isCorrect = userAnswers[index] === question.correctAnswer;
+                } else {
+                    // For short answer, do a case-insensitive comparison
+                    const userAnswer = (userAnswers[index] || '').trim().toLowerCase();
+                    const correctAnswer = question.correctAnswer.toLowerCase();
+                    isCorrect = userAnswer === correctAnswer;
+                }
+                
+                if (isCorrect) {
+                    score++;
+                    topicScores[question.topic]++;
+                }
+            });
+            
+            // Update student info
+            const studentName = document.getElementById('student-name').value.trim();
+            const studentId = document.getElementById('student-id').value.trim();
+            studentInfoEl.textContent = `${studentName} (ID: ${studentId})`;
+            
+            // Update score
+            finalScoreEl.textContent = `${score}/${quizData.length}`;
+            scoreBar.style.width = `${(score / quizData.length) * 100}%`;
+            
+            // Update topic breakdown
+            topicBreakdownEl.innerHTML = '';
+            Object.keys(topicScores).forEach(topic => {
+                const topicDiv = document.createElement('div');
+                topicDiv.className = 'bg-gray-50 p-4 rounded-lg';
+                
+                const percentage = Math.round((topicScores[topic] / topicTotals[topic]) * 100);
+                
+                topicDiv.innerHTML = `
+                    <h3 class="font-medium text-gray-800">${topic}</h3>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-sm text-gray-600">${topicScores[topic]}/${topicTotals[topic]} correct</span>
+                        <span class="text-sm font-medium ${percentage >= 70 ? 'text-green-600' : percentage >= 40 ? 'text-yellow-600' : 'text-red-600'}">${percentage}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                        <div class="h-2 rounded-full ${percentage >= 70 ? 'bg-green-500' : percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'}" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                
+                topicBreakdownEl.appendChild(topicDiv);
+            });
+            
+            // Show solutions
+            solutionsContainerEl.innerHTML = '';
+            quizData.forEach((question, index) => {
+                const solutionDiv = document.createElement('div');
+                solutionDiv.className = 'border-b border-gray-200 pb-4';
+                
+                // Check if answer is correct
+                let isCorrect = false;
+                let userAnswerText = 'Not answered';
+                
+                if (question.type === 'multiple-choice') {
+                    isCorrect = userAnswers[index] === question.correctAnswer;
+                    if (userAnswers[index] !== null) {
+                        userAnswerText = question.options[userAnswers[index]];
+                    }
+                } else {
+                    // For short answer
+                    if (userAnswers[index]) {
+                        userAnswerText = userAnswers[index];
+                        const userAnswer = userAnswers[index].trim().toLowerCase();
+                        const correctAnswer = question.correctAnswer.toLowerCase();
+                        isCorrect = userAnswer === correctAnswer;
+                    }
+                }
+                
+                const correctAnswerText = question.type === 'multiple-choice' 
+                    ? question.options[question.correctAnswer]
+                    : question.correctAnswer;
+                
+                solutionDiv.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium">Question ${index + 1}</h3>
+                        <span class="px-2 py-1 text-xs font-medium rounded ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${isCorrect ? 'Correct' : 'Incorrect'}
+                        </span>
+                    </div>
+                    <p class="text-gray-800 mb-2">${question.question}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                        <div class="bg-gray-50 p-2 rounded">
+                            <span class="text-xs text-gray-500">Your Answer:</span>
+                            <p class="font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}">${userAnswerText}</p>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded">
+                            <span class="text-xs text-gray-500">Correct Answer:</span>
+                            <p class="font-medium text-green-600">${correctAnswerText}</p>
+                        </div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded">
+                        <span class="text-xs text-blue-500">Solution:</span>
+                        <p class="text-blue-800">${question.solution}</p>
+                    </div>
+                `;
+                
+                solutionsContainerEl.appendChild(solutionDiv);
+            });
+        }
+
+        // Restart quiz button handler
+        restartQuizBtn.addEventListener('click', function() {
+            resultsScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            quizStarted = false;
+        });
+    });
+</script>
