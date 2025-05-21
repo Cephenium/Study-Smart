@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year 13 Chemistry Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a3c6e 0%, #2a5298 100%);
+            min-height: 100vh;
+        }
+        
+        .character {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .character:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .character.selected {
+            border: 3px solid #4ade80;
+            transform: translateY(-5px);
+        }
+        
+        .timer-bar {
+            transition: width 1s linear;
+        }
+        
+        .option-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .option-btn:hover:not(.disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .option-btn.correct {
+            background-color: #4ade80 !important;
+            color: white !important;
+        }
+        
+        .option-btn.incorrect {
+            background-color: #f87171 !important;
+            color: white !important;
+        }
+        
+        .option-btn.selected {
+            border: 2px solid #3b82f6;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .molecule-svg {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="fade-in">
+            <div class="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+                <h1 class="text-4xl font-bold text-center mb-6">Year 13 Chemistry Challenge</h1>
+                <p class="text-lg text-center mb-8">Test your advanced chemistry knowledge with this interactive quiz!</p>
+                
+                <div class="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-8">
+                    <h2 class="text-2xl font-semibold mb-4">Instructions:</h2>
+                    <ul class="list-disc pl-6 space-y-2">
+                        <li>Choose your character before starting the quiz</li>
+                        <li>The quiz consists of 15 challenging chemistry questions</li>
+                        <li><span class="text-yellow-300 font-medium">Questions 1-7:</span> You have <span class="font-bold">30 seconds</span> to answer each question</li>
+                        <li><span class="text-yellow-300 font-medium">Questions 8-15:</span> You have <span class="font-bold">60 seconds</span> to answer each question</li>
+                        <li>The quiz will automatically advance when time runs out</li>
+                        <li>You'll receive detailed feedback and solutions at the end</li>
+                    </ul>
+                </div>
+                
+                <h2 class="text-2xl font-semibold mb-4 text-center">Choose Your Character</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <!-- Character 1 -->
+                    <div class="character bg-white/5 backdrop-blur-sm rounded-lg p-6 text-center cursor-pointer" data-character="scientist">
+                        <div class="bg-blue-500/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Scientist</h3>
+                        <p class="text-sm text-gray-300">The methodical researcher who analyzes every detail</p>
+                    </div>
+                    
+                    <!-- Character 2 -->
+                    <div class="character bg-white/5 backdrop-blur-sm rounded-lg p-6 text-center cursor-pointer" data-character="professor">
+                        <div class="bg-purple-500/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Professor</h3>
+                        <p class="text-sm text-gray-300">The knowledgeable academic with years of experience</p>
+                    </div>
+                    
+                    <!-- Character 3 -->
+                    <div class="character bg-white/5 backdrop-blur-sm rounded-lg p-6 text-center cursor-pointer" data-character="chemist">
+                        <div class="bg-green-500/30 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2">Chemist</h3>
+                        <p class="text-sm text-gray-300">The practical experimenter who loves hands-on challenges</p>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button id="start-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Start Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden fade-in">
+            <div class="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center">
+                        <div id="character-icon" class="w-12 h-12 rounded-full flex items-center justify-center mr-3"></div>
+                        <span id="character-name" class="text-lg font-medium"></span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-300">Question</div>
+                        <div class="text-2xl font-bold"><span id="current-question">1</span>/<span id="total-questions">15</span></div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-sm font-medium">Time Remaining: <span id="timer-text">30</span>s</div>
+                        <div id="time-indicator" class="text-sm font-medium">30-second question</div>
+                    </div>
+                    <div class="bg-white/5 h-2 rounded-full">
+                        <div id="timer-bar" class="bg-blue-500 h-2 rounded-full timer-bar" style="width: 100%;"></div>
+                    </div>
+                </div>
+                
+                <div id="question-container" class="mb-8">
+                    <h2 id="question-text" class="text-xl font-semibold mb-4">Question text goes here</h2>
+                    <div id="question-image" class="mb-6 flex justify-center"></div>
+                    <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Options will be inserted here -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button id="prev-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-lg transition-all hidden">
+                        Previous
+                    </button>
+                    <button id="next-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-all ml-auto">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden fade-in">
+            <div class="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl">
+                <h1 class="text-3xl font-bold text-center mb-6">Quiz Results</h1>
+                
+                <div class="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-8">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                        <div class="flex items-center mb-4 md:mb-0">
+                            <div id="result-character-icon" class="w-16 h-16 rounded-full flex items-center justify-center mr-4"></div>
+                            <div>
+                                <div class="text-sm text-gray-300">Character</div>
+                                <div id="result-character-name" class="text-xl font-medium"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="text-sm text-gray-300">Your Score</div>
+                            <div class="text-4xl font-bold"><span id="score">0</span>/<span id="max-score">15</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="h-4 bg-white/5 rounded-full">
+                            <div id="score-bar" class="h-4 bg-gradient-to-r from-blue-500 to-green-500 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="feedback-message" class="text-center text-lg mb-6"></div>
+                </div>
+                
+                <h2 class="text-2xl font-semibold mb-4">Question Review</h2>
+                <div id="questions-review" class="space-y-6">
+                    <!-- Question review items will be inserted here -->
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button id="restart-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-all transform hover:scale-105">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Quiz data
+            const quizData = [
+                {
+                    question: "Which of the following best describes the role of a catalyst in a chemical reaction?",
+                    options: [
+                        "It increases the yield of the reaction",
+                        "It provides an alternative reaction pathway with lower activation energy",
+                        "It shifts the equilibrium position to favor the products",
+                        "It increases the enthalpy change of the reaction"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "A catalyst provides an alternative reaction pathway with a lower activation energy, increasing the rate of reaction without being consumed in the process. It does not affect the position of equilibrium or the enthalpy change.",
+                    timeLimit: 30
+                },
+                {
+                    question: "Calculate the pH of a buffer solution containing 0.15 M ethanoic acid (Ka = 1.8 × 10⁻⁵) and 0.20 M sodium ethanoate.",
+                    options: [
+                        "pH = 4.83",
+                        "pH = 5.12",
+                        "pH = 4.32",
+                        "pH = 3.74"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "Using the Henderson-Hasselbalch equation: pH = pKa + log([salt]/[acid]) = -log(1.8 × 10⁻⁵) + log(0.20/0.15) = 4.74 + 0.09 = 4.83",
+                    timeLimit: 30
+                },
+                {
+                    question: "Which of the following statements about entropy is correct?",
+                    options: [
+                        "Entropy always decreases in spontaneous reactions",
+                        "The entropy of a perfect crystal at absolute zero is positive",
+                        "Entropy generally increases when a liquid changes to a gas",
+                        "Entropy is a measure of the heat content of a system"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "Entropy generally increases when a liquid changes to a gas because the particles have more positional disorder in the gaseous state. The third law of thermodynamics states that the entropy of a perfect crystal at absolute zero is zero, not positive.",
+                    timeLimit: 30
+                },
+                {
+                    question: "What is the hybridization of the carbon atom in the carbonyl group of an aldehyde?",
+                    options: [
+                        "sp",
+                        "sp²",
+                        "sp³",
+                        "sp³d"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "The carbon atom in a carbonyl group (C=O) has sp² hybridization. This creates a trigonal planar geometry with bond angles of approximately 120°.",
+                    timeLimit: 30
+                },
+                {
+                    question: "Which mechanism best describes the reaction between 2-bromopropane and sodium hydroxide?",
+                    options: [
+                        "SN1",
+                        "SN2",
+                        "E1",
+                        "E2"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "The reaction between 2-bromopropane (a secondary halogenoalkane) and sodium hydroxide primarily follows an SN1 mechanism. This involves the formation of a carbocation intermediate due to the relatively stable secondary carbocation that can form.",
+                    timeLimit: 30
+                },
+                {
+                    question: "What is the major product when propene reacts with hydrogen bromide in the presence of peroxides?",
+                    options: [
+                        "1-bromopropane",
+                        "2-bromopropane",
+                        "1,2-dibromopropane",
+                        "Propyl bromide"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "When propene reacts with HBr in the presence of peroxides, the reaction follows anti-Markovnikov addition due to the radical mechanism. This results in 1-bromopropane as the major product, with the bromine attaching to the less substituted carbon atom.",
+                    timeLimit: 30
+                },
+                {
+                    question: "Which of the following best explains the trend in boiling points of the halogens (F₂, Cl₂, Br₂, I₂)?",
+                    options: [
+                        "Increasing atomic radius",
+                        "Increasing electronegativity",
+                        "Increasing van der Waals forces",
+                        "Increasing bond strength"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "The boiling points of halogens increase down the group (F₂ < Cl₂ < Br₂ < I₂) due to increasing van der Waals forces. As the atomic size increases, the electron cloud becomes more polarizable, resulting in stronger intermolecular forces and higher boiling points.",
+                    timeLimit: 30
+                },
+                {
+                    question: "Consider the following cell: Zn(s) | Zn²⁺(aq) || Cu²⁺(aq) | Cu(s). If the standard electrode potentials are E°(Zn²⁺/Zn) = -0.76 V and E°(Cu²⁺/Cu) = +0.34 V, what is the standard cell potential?",
+                    image: `<svg class="molecule-svg" width="400" height="120" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="50" y="20" width="120" height="80" fill="none" stroke="white" stroke-width="2"/>
+                        <rect x="230" y="20" width="120" height="80" fill="none" stroke="white" stroke-width="2"/>
+                        <text x="110" y="60" fill="white" font-size="16" text-anchor="middle">Zn | Zn²⁺</text>
+                        <text x="290" y="60" fill="white" font-size="16" text-anchor="middle">Cu²⁺ | Cu</text>
+                        <line x1="170" y1="50" x2="230" y2="50" stroke="white" stroke-width="2"/>
+                        <text x="200" y="40" fill="white" font-size="14" text-anchor="middle">Salt bridge</text>
+                    </svg>`,
+                    options: [
+                        "+0.42 V",
+                        "+1.10 V",
+                        "-0.42 V",
+                        "-1.10 V"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "The standard cell potential is calculated as E°cell = E°(cathode) - E°(anode) = E°(Cu²⁺/Cu) - E°(Zn²⁺/Zn) = +0.34 V - (-0.76 V) = +1.10 V. The positive value indicates a spontaneous reaction.",
+                    timeLimit: 60
+                },
+                {
+                    question: "Identify the major organic product formed when cyclohexene reacts with HBr.",
+                    image: `<svg class="molecule-svg" width="400" height="150" xmlns="http://www.w3.org/2000/svg">
+                        <polygon points="150,50 175,25 225,25 250,50 225,75 175,75" fill="none" stroke="white" stroke-width="2"/>
+                        <line x1="175" y1="25" x2="225" y2="25" stroke="white" stroke-width="4"/>
+                        <text x="300" y="50" fill="white" font-size="20" text-anchor="middle">+ HBr →</text>
+                        <text x="300" y="75" fill="white" font-size="16" text-anchor="middle">?</text>
+                    </svg>`,
+                    options: [
+                        "1-bromocyclohexene",
+                        "1-bromocyclohexane",
+                        "bromocyclohexane",
+                        "trans-2-bromocyclohexanol"
+                    ],
+                    correctAnswer: 2,
+                    explanation: "When cyclohexene reacts with HBr, the reaction follows Markovnikov's rule. The hydrogen attaches to the carbon with more hydrogens (less substituted), and the bromine attaches to the carbon with fewer hydrogens (more substituted), forming bromocyclohexane.",
+                    timeLimit: 60
+                },
+                {
+                    question: "Calculate the standard enthalpy change for the reaction: 2C(s) + 3H₂(g) + ½O₂(g) → C₂H₅OH(l) using the following data:\nΔHf°[C₂H₅OH(l)] = -278 kJ/mol\nΔHf°[CO₂(g)] = -394 kJ/mol\nΔHf°[H₂O(l)] = -286 kJ/mol",
+                    options: [
+                        "-278 kJ/mol",
+                        "+278 kJ/mol",
+                        "-1368 kJ/mol",
+                        "+1368 kJ/mol"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "For the formation reaction of ethanol from its elements, the standard enthalpy change is equal to the standard enthalpy of formation of ethanol, which is -278 kJ/mol. The other values provided are not needed for this calculation.",
+                    timeLimit: 60
+                },
+                {
+                    question: "Which of the following best explains why transition metals often form colored compounds?",
+                    options: [
+                        "Due to d-d electron transitions when partially filled d-orbitals are split by ligands",
+                        "Due to the presence of unpaired electrons in their valence shell",
+                        "Due to charge transfer between the metal and non-metal ions",
+                        "Due to the emission of photons during radioactive decay"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "Transition metals form colored compounds primarily due to d-d electron transitions. When ligands approach the transition metal ion, they cause the d-orbitals to split into different energy levels. The absorption of visible light causes electrons to jump between these split d-orbitals, and the complementary color is observed.",
+                    timeLimit: 60
+                },
+                {
+                    question: "Identify the correct IUPAC name for the following organic compound:",
+                    image: `<svg class="molecule-svg" width="400" height="150" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="100" y1="75" x2="150" y2="75" stroke="white" stroke-width="2"/>
+                        <line x1="150" y1="75" x2="200" y2="75" stroke="white" stroke-width="2"/>
+                        <line x1="200" y1="75" x2="250" y2="75" stroke="white" stroke-width="2"/>
+                        <line x1="250" y1="75" x2="300" y2="75" stroke="white" stroke-width="2"/>
+                        <line x1="150" y1="75" x2="150" y2="40" stroke="white" stroke-width="2"/>
+                        <line x1="200" y1="75" x2="200" y2="40" stroke="white" stroke-width="2"/>
+                        <line x1="200" y1="40" x2="250" y2="40" stroke="white" stroke-width="2"/>
+                        <line x1="250" y1="40" x2="250" y2="75" stroke="white" stroke-width="2"/>
+                        <text x="150" y="35" fill="white" font-size="14" text-anchor="middle">OH</text>
+                        <text x="225" y="35" fill="white" font-size="14" text-anchor="middle">O</text>
+                    </svg>`,
+                    options: [
+                        "4-hydroxy-2-pentanone",
+                        "2-hydroxy-4-pentanone",
+                        "4-hydroxy-3-pentanone",
+                        "3-hydroxy-5-pentanone"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "The compound shown is 4-hydroxy-2-pentanone. The main chain is a 5-carbon chain (pentanone) with a ketone group at position 2 and a hydroxyl group at position 4. The carbonyl group takes numbering priority over the hydroxyl group.",
+                    timeLimit: 60
+                },
+                {
+                    question: "For the reaction: N₂(g) + 3H₂(g) ⇌ 2NH₃(g), which change would increase the yield of ammonia at equilibrium?",
+                    options: [
+                        "Decreasing the pressure",
+                        "Adding a catalyst",
+                        "Increasing the temperature",
+                        "Removing hydrogen gas"
+                    ],
+                    correctAnswer: 0,
+                    explanation: "According to Le Chatelier's principle, increasing pressure will favor the side with fewer gas molecules. In this reaction, there are 4 moles of gas on the reactant side (1 N₂ + 3 H₂) and 2 moles on the product side (2 NH₃). Therefore, increasing pressure will shift the equilibrium to the right, increasing the yield of ammonia.",
+                    timeLimit: 60
+                },
+                {
+                    question: "What is the oxidation state of chromium in the dichromate ion (Cr₂O₇²⁻)?",
+                    options: [
+                        "+3",
+                        "+6",
+                        "+7",
+                        "+12"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "In Cr₂O₇²⁻, the oxidation state of oxygen is -2. Let the oxidation state of Cr be x. Then: 2x + 7(-2) = -2. Solving: 2x - 14 = -2, so 2x = 12, and x = +6. Therefore, the oxidation state of chromium in dichromate ion is +6.",
+                    timeLimit: 60
+                },
+                {
+                    question: "Which of the following compounds would you expect to have the highest boiling point?",
+                    options: [
+                        "CH₃CH₂CH₂CH₃ (butane)",
+                        "CH₃CH₂OH (ethanol)",
+                        "CH₃OCH₃ (dimethyl ether)",
+                        "CH₃CH₂CH₂Cl (1-chloropropane)"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "Ethanol (CH₃CH₂OH) has the highest boiling point among these compounds due to hydrogen bonding. Hydrogen bonding is the strongest intermolecular force present in these options and occurs between the hydrogen atom bonded to oxygen and the oxygen atom of another ethanol molecule.",
+                    timeLimit: 60
+                },
+                {
+                    question: "What is the major product when benzene reacts with chloromethane in the presence of aluminum chloride catalyst?",
+                    image: `<svg class="molecule-svg" width="400" height="150" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="150" cy="75" r="30" fill="none" stroke="white" stroke-width="2"/>
+                        <line x1="150" y1="45" x2="150" y2="105" stroke="white" stroke-width="2"/>
+                        <line x1="124" y1="60" x2="176" y2="90" stroke="white" stroke-width="2"/>
+                        <line x1="124" y1="90" x2="176" y2="60" stroke="white" stroke-width="2"/>
+                        <text x="250" y="75" fill="white" font-size="20" text-anchor="middle">+ CH₃Cl</text>
+                        <text x="250" y="95" fill="white" font-size="16" text-anchor="middle">AlCl₃</text>
+                        <text x="300" y="75" fill="white" font-size="20" text-anchor="middle">→</text>
+                        <text x="350" y="75" fill="white" font-size="16" text-anchor="middle">?</text>
+                    </svg>`,
+                    options: [
+                        "Chlorobenzene",
+                        "Toluene (methylbenzene)",
+                        "Benzyl chloride",
+                        "Benzoic acid"
+                    ],
+                    correctAnswer: 1,
+                    explanation: "This reaction is a Friedel-Crafts alkylation. When benzene reacts with chloromethane (CH₃Cl) in the presence of AlCl₃ catalyst, the methyl group is transferred to the benzene ring, forming toluene (methylbenzene). The AlCl₃ acts as a Lewis acid, generating a carbocation intermediate that attacks the benzene ring.",
+                    timeLimit: 60
+                }
+            ];
+            
+            // DOM elements
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const resultsScreen = document.getElementById('results-screen');
+            const startBtn = document.getElementById('start-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const restartBtn = document.getElementById('restart-btn');
+            const characters = document.querySelectorAll('.character');
+            const questionText = document.getElementById('question-text');
+            const questionImage = document.getElementById('question-image');
+            const optionsContainer = document.getElementById('options-container');
+            const currentQuestionEl = document.getElementById('current-question');
+            const totalQuestionsEl = document.getElementById('total-questions');
+            const timerText = document.getElementById('timer-text');
+            const timerBar = document.getElementById('timer-bar');
+            const timeIndicator = document.getElementById('time-indicator');
+            const characterName = document.getElementById('character-name');
+            const characterIcon = document.getElementById('character-icon');
+            const resultCharacterName = document.getElementById('result-character-name');
+            const resultCharacterIcon = document.getElementById('result-character-icon');
+            const scoreEl = document.getElementById('score');
+            const maxScoreEl = document.getElementById('max-score');
+            const scoreBar = document.getElementById('score-bar');
+            const feedbackMessage = document.getElementById('feedback-message');
+            const questionsReview = document.getElementById('questions-review');
+            
+            // Quiz state
+            let currentQuestion = 0;
+            let score = 0;
+            let selectedCharacter = null;
+            let userAnswers = Array(quizData.length).fill(null);
+            let timer = null;
+            let timeLeft = 0;
+            
+            // Character data
+            const characterData = {
+                scientist: {
+                    name: "Scientist",
+                    icon: `<div class="bg-blue-500/30 rounded-full w-full h-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                    </div>`
+                },
+                professor: {
+                    name: "Professor",
+                    icon: `<div class="bg-purple-500/30 rounded-full w-full h-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                        </svg>
+                    </div>`
+                },
+                chemist: {
+                    name: "Chemist",
+                    icon: `<div class="bg-green-500/30 rounded-full w-full h-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                    </div>`
+                }
+            };
+            
+            // Initialize quiz
+            function init() {
+                totalQuestionsEl.textContent = quizData.length;
+                maxScoreEl.textContent = quizData.length;
+                
+                // Character selection
+                characters.forEach(character => {
+                    character.addEventListener('click', () => {
+                        characters.forEach(c => c.classList.remove('selected'));
+                        character.classList.add('selected');
+                        selectedCharacter = character.dataset.character;
+                        startBtn.disabled = false;
+                    });
+                });
+                
+                // Start button
+                startBtn.addEventListener('click', startQuiz);
+                
+                // Next button
+                nextBtn.addEventListener('click', () => {
+                    clearInterval(timer);
+                    if (currentQuestion < quizData.length - 1) {
+                        currentQuestion++;
+                        loadQuestion();
+                    } else {
+                        showResults();
+                    }
+                });
+                
+                // Previous button (hidden by default)
+                prevBtn.addEventListener('click', () => {
+                    if (currentQuestion > 0) {
+                        currentQuestion--;
+                        loadQuestion();
+                    }
+                });
+                
+                // Restart button
+                restartBtn.addEventListener('click', () => {
+                    currentQuestion = 0;
+                    score = 0;
+                    userAnswers = Array(quizData.length).fill(null);
+                    resultsScreen.classList.add('hidden');
+                    welcomeScreen.classList.remove('hidden');
+                });
+            }
+            
+            // Start the quiz
+            function startQuiz() {
+                welcomeScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                
+                // Set character info
+                characterName.textContent = characterData[selectedCharacter].name;
+                characterIcon.innerHTML = characterData[selectedCharacter].icon;
+                
+                loadQuestion();
+            }
+            
+            // Load current question
+            function loadQuestion() {
+                const question = quizData[currentQuestion];
+                
+                // Update question number
+                currentQuestionEl.textContent = currentQuestion + 1;
+                
+                // Update question text
+                questionText.textContent = question.question;
+                
+                // Update question image if exists
+                if (question.image) {
+                    questionImage.innerHTML = question.image;
+                    questionImage.classList.remove('hidden');
+                } else {
+                    questionImage.innerHTML = '';
+                    questionImage.classList.add('hidden');
+                }
+                
+                // Update time indicator
+                if (question.timeLimit === 30) {
+                    timeIndicator.textContent = '30-second question';
+                    timeIndicator.classList.add('text-yellow-300');
+                    timeIndicator.classList.remove('text-green-300');
+                } else {
+                    timeIndicator.textContent = '60-second question';
+                    timeIndicator.classList.add('text-green-300');
+                    timeIndicator.classList.remove('text-yellow-300');
+                }
+                
+                // Clear options
+                optionsContainer.innerHTML = '';
+                
+                // Add options
+                question.options.forEach((option, index) => {
+                    const optionBtn = document.createElement('button');
+                    optionBtn.className = 'option-btn bg-white/5 hover:bg-white/10 text-left p-4 rounded-lg transition-all';
+                    if (userAnswers[currentQuestion] === index) {
+                        optionBtn.classList.add('selected');
+                    }
+                    
+                    optionBtn.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full border-2 border-blue-400 flex items-center justify-center mr-3">
+                                <span class="text-sm">${String.fromCharCode(65 + index)}</span>
+                            </div>
+                            <span>${option}</span>
+                        </div>
+                    `;
+                    
+                    optionBtn.addEventListener('click', () => selectOption(index));
+                    optionsContainer.appendChild(optionBtn);
+                });
+                
+                // Start timer
+                startTimer(question.timeLimit);
+                
+                // Update button text
+                if (currentQuestion === quizData.length - 1) {
+                    nextBtn.textContent = 'Finish';
+                } else {
+                    nextBtn.textContent = 'Next';
+                }
+                
+                // Show/hide prev button
+                if (currentQuestion > 0) {
+                    prevBtn.classList.remove('hidden');
+                } else {
+                    prevBtn.classList.add('hidden');
+                }
+            }
+            
+            // Select an option
+            function selectOption(optionIndex) {
+                userAnswers[currentQuestion] = optionIndex;
+                
+                // Update selected option UI
+                const optionBtns = optionsContainer.querySelectorAll('.option-btn');
+                optionBtns.forEach((btn, index) => {
+                    if (index === optionIndex) {
+                        btn.classList.add('selected');
+                    } else {
+                        btn.classList.remove('selected');
+                    }
+                });
+            }
+            
+            // Start timer for current question
+            function startTimer(seconds) {
+                clearInterval(timer);
+                timeLeft = seconds;
+                timerText.textContent = timeLeft;
+                timerBar.style.width = '100%';
+                
+                timer = setInterval(() => {
+                    timeLeft--;
+                    timerText.textContent = timeLeft;
+                    timerBar.style.width = `${(timeLeft / seconds) * 100}%`;
+                    
+                    if (timeLeft <= 5) {
+                        timerBar.classList.add('bg-red-500');
+                        timerBar.classList.remove('bg-blue-500');
+                    } else {
+                        timerBar.classList.add('bg-blue-500');
+                        timerBar.classList.remove('bg-red-500');
+                    }
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timer);
+                        if (currentQuestion < quizData.length - 1) {
+                            currentQuestion++;
+                            loadQuestion();
+                        } else {
+                            showResults();
+                        }
+                    }
+                }, 1000);
+            }
+            
+            // Show results
+            function showResults() {
+                clearInterval(timer);
+                quizScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                
+                // Calculate score
+                score = 0;
+                userAnswers.forEach((answer, index) => {
+                    if (answer === quizData[index].correctAnswer) {
+                        score++;
+                    }
+                });
+                
+                // Update score display
+                scoreEl.textContent = score;
+                scoreBar.style.width = `${(score / quizData.length) * 100}%`;
+                
+                // Set character info
+                resultCharacterName.textContent = characterData[selectedCharacter].name;
+                resultCharacterIcon.innerHTML = characterData[selectedCharacter].icon;
+                
+                // Set feedback message
+                if (score === quizData.length) {
+                    feedbackMessage.textContent = "Perfect score! You've mastered Year 13 Chemistry!";
+                    feedbackMessage.classList.add('text-green-300');
+                } else if (score >= quizData.length * 0.8) {
+                    feedbackMessage.textContent = "Excellent work! You have a strong understanding of chemistry concepts.";
+                    feedbackMessage.classList.add('text-green-300');
+                } else if (score >= quizData.length * 0.6) {
+                    feedbackMessage.textContent = "Good job! You're on the right track with your chemistry knowledge.";
+                    feedbackMessage.classList.add('text-yellow-300');
+                } else if (score >= quizData.length * 0.4) {
+                    feedbackMessage.textContent = "You're making progress. Review the explanations to strengthen your understanding.";
+                    feedbackMessage.classList.add('text-yellow-300');
+                } else {
+                    feedbackMessage.textContent = "Keep studying! Chemistry takes practice. Review the explanations carefully.";
+                    feedbackMessage.classList.add('text-red-300');
+                }
+                
+                // Generate question review
+                questionsReview.innerHTML = '';
+                quizData.forEach((question, index) => {
+                    const userAnswer = userAnswers[index];
+                    const isCorrect = userAnswer === question.correctAnswer;
+                    
+                    const reviewItem = document.createElement('div');
+                    reviewItem.className = 'bg-white/5 backdrop-blur-sm rounded-lg p-6';
+                    
+                    reviewItem.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-lg font-medium">Question ${index + 1}</h3>
+                            <span class="px-3 py-1 rounded-full text-sm font-medium ${isCorrect ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}">
+                                ${isCorrect ? 'Correct' : 'Incorrect'}
+                            </span>
+                        </div>
+                        <p class="mb-4">${question.question}</p>
+                        ${question.image ? `<div class="mb-4">${question.image}</div>` : ''}
+                        <div class="mb-4">
+                            <div class="text-sm text-gray-300 mb-1">Your answer:</div>
+                            <div class="${isCorrect ? 'text-green-300' : 'text-red-300'}">
+                                ${userAnswer !== null ? question.options[userAnswer] : 'No answer provided'}
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="text-sm text-gray-300 mb-1">Correct answer:</div>
+                            <div class="text-green-300">${question.options[question.correctAnswer]}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-300 mb-1">Explanation:</div>
+                            <div class="text-blue-300">${question.explanation}</div>
+                        </div>
+                    `;
+                    
+                    questionsReview.appendChild(reviewItem);
+                });
+            }
+            
+            // Initialize the quiz
+            init();
+        });
+    </script>
+</body>
+</html>
